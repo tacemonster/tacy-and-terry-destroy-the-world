@@ -1,0 +1,4 @@
+.config
+./target
+*.txt
+Cargo.lock
