@@ -1,12 +1,5 @@
-.config
-./target
-*.txt
-Cargo.lock
-
-
-#Added by cargo
-#
-#already existing elements are commented out
-
+/.config
 /target
+/api-key.txt
+/Cargo.lock
 **/*.rs.bk
