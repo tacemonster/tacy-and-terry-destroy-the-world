@@ -1,4 +1,5 @@
-.config
-./target
-*.txt
-Cargo.lock
+/.config
+/target
+/api-key.txt
+/Cargo.lock
+**/*.rs.bk
