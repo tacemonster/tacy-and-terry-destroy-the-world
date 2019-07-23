@@ -6,16 +6,20 @@
 					"items":[{
 						"itemHash":2712244741,
 							"itemInstanceId":"6917529095138904228",
-							"quantity":1,"bindStatus":0,
-							"location":1,"bucketHash":1498876634,
+							"quantity":1,
+							"bindStatus":0,
+							"location":1,
+							"bucketHash":1498876634,
 							"transferStatus":1,
 							"lockable":true,
-							"state":0,"dismantlePermission":2,
+							"state":0,
+							"dismantlePermission":2,
 							"isWrapper":false
 					},{
 						"itemHash":3413074534,
 							"itemInstanceId":"6917529096097572180",
-							"quantity":1,"bindStatus":0,
+							"quantity":1,
+							"bindStatus":0,
 							"location":1,
 							"bucketHash":2465295065,
 							"transferStatus":1,
@@ -488,9 +492,12 @@
 						"state":0,
 						"dismantlePermission":0,
 						"isWrapper":false}]}},
-				"privacy":1}},
+				"privacy":1
+		}
+	},
 		"ErrorCode":1,
 		"ThrottleSeconds":0,
 		"ErrorStatus":"Success",
 		"Message":"Ok",
-		"MessageData":{}}
+		"MessageData":{}
+}
