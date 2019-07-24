@@ -1,5 +1,5 @@
 use std::io::Read;
-extern crate rustc_serialize;
+//extern crate rustc_serialize;
 extern crate serde;
 use serde::{Deserialize, Serialize};
 
@@ -45,15 +45,14 @@ fn main() {
 
 	let mut response = reqwest::Client::new()
 		.get(&search_url)
-		.header("X-API-KEY", api_key)
+		.header("X-API-KEY", api_key.clone())
 		.send()
 		.expect("Failed to send request");
 	let mut buf = String::new();
 	response.read_to_string(&mut buf).expect("Failed to read response");
 	let user = get_json(buf);
 	let u: User = serde_json::from_str(&user).expect("failed to parse response");
-	let api_key_2 = get_api_key();//TODO figure out how to fix this!!
-	let equipment = get_gear(&api_key_2, base_url, platform, u.membershipId, request_type);
+	let equipment = get_gear(&api_key, base_url, platform, u.membershipId, request_type);
 	println!("{}",equipment)
 }
 
