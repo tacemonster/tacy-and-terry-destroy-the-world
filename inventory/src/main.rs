@@ -16,7 +16,7 @@ fn get_api_key() -> String {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
-Responce: Responce,
+            Response: Response,
             ErrorCode: usize,
             ThrottleSeconds: usize,
             ErrorStatus: String,
@@ -25,11 +25,32 @@ Responce: Responce,
 }
 
 #[derive(Serialize, Deserialize)]
-struct Responce { 
-iconPath: String,
+struct Response { 
+            iconPath: String,
             membershipType: String,
             membershipId: String,
             displayName: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Item {
+  itemHash: usize,
+  itemInstanceId: String,
+  quantity: usize,
+  bindStatus: usize,
+  location: usize,
+  bucketHash: usize,
+  transferStatus: usize,
+  lockable: bool,
+  state: usize,
+  dismantlePermission: usize,
+  isWrapper: bool
+}
+
+
+fn deserialize_json(ref mut buf:std::string::String) -> Item {
+    let i: Item = serde_json::from_str(buf).expect("Failed to deserialize item");
+    i
 }
 
 //fn get_json(source:String, start:str, end:str) -> String {
@@ -127,7 +148,7 @@ fn get_gear(membershipId:String) -> String {
 //  let stream = Deserializer::from_str(&contents).into_iter::<Value>();
   let stream = split_inventory(contents);
   for value in stream {
-    println!("{}", value);
+    println!("{:?}", deserialize_json(value));
   }
   //println!("{}", buf);
   //buf
