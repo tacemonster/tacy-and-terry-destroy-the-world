@@ -1,32 +1,54 @@
 use std::io::Read;
 //extern crate rustc_serialize;
+
+use rustc_serialize::json::Json;
+
 extern crate serde;
 use serde::{Deserialize, Serialize};
+use serde_json::{Deserializer, Value};
+use serde_json::Result;
 
-#[derive(Serialize, Deserialize, Debug)]
-struct User {
-  iconPath: String,
-  membershipType: u32,
-  membershipId: String,
-  displayName: String,
+#[derive(Serialize, Deserialize)]
+struct Data {
+            Response: Response,
+            ErrorCode: usize,
+            ThrottleSeconds: usize,
+            ErrorStatus: String,
+            Message: String,
+            MessageData: String
+}
+
+#[derive(Serialize, Deserialize)]
+struct Response { 
+            iconPath: String,
+            membershipType: String,
+            membershipId: String,
+            displayName: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct UserResponse {
-  Response: User,
-  ErrorCode: u32,
-  ThrottleSeconds: u32,
-  ErrorStatus: String,
-  Message: String,
-  MessageData: Vec<String>,
+struct Item {
+  itemHash: usize,
+  itemInstanceId: String,
+  quantity: usize,
+  bindStatus: usize,
+  location: usize,
+  bucketHash: usize,
+  transferStatus: usize,
+  lockable: bool,
+  state: usize,
+  dismantlePermission: usize,
+  isWrapper: bool
 }
+
 
 fn get_api_key() -> String {
-	let mut f = std::fs::File::open("api-key.txt").expect("could not open api key");
-	let mut key = String::new();
-	f.read_to_string(&mut key).expect("could not read api key");
-	key.trim().to_string()
+  let mut f = std::fs::File::open("api-key.txt").expect("could not open api key");
+  let mut key = String::new();
+  f.read_to_string(&mut key).expect("could not read api key");
+  key.trim().to_string()
 }
+
 
 fn main() {
 	let api_key = get_api_key();
@@ -86,3 +108,38 @@ fn get_json(source:String) -> String {
   let mut result = &source[(start_index + 1)..end_index];
   result.to_string()
 }
+  
+fn deserialize_json(ref mut buf:std::string::String) -> Item {
+  let i: Item = serde_json::from_str(buf).expect("Failed to deserialize item");
+  i
+}
+/*
+//fn get_json(source:String, start:str, end:str) -> String {
+fn get_json(source:String) -> String {
+  let start_index = source.find("2305843009260353573").expect("failed to find open");
+  let end_index = source.find("2305843009260353575").expect("failed to find close");
+  let mut result = &source[(start_index + 31)..(end_index - 4)];
+  result.to_string()
+}
+*/
+fn split_inventory(mut source:String) -> Vec<String> {
+  let mut results = Vec::new();
+    while !source.is_empty() {
+      let start = source.find("{").expect("Failed to find start of item");
+      let end = source.find("}").expect("Failed to find end of item");
+      let item = &source[start..(end+1)];
+      if !item.is_empty() {
+        results.push(item.to_string());
+      }
+      source = source[(end+1)..].to_string();
+    }
+  results
+}
+
+
+
+
+
+
+
+
