@@ -6,7 +6,10 @@ edition = "2018"
 
 [dependencies]
 reqwest = "*"
+serde = "*"
+serde_json = "*"
+rustc-serialize = "*"
 
 [[bin]]
-name = "destiny-char"
-path = "destiny-char.rs"
+name = "main"
+path = "inventory/src/main.rs"

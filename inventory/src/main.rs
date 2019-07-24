@@ -7,7 +7,7 @@ extern crate serde;
 use serde::{Deserialize, Serialize};
 use serde_json::{Deserializer, Value};
 use serde_json::Result;
-
+/*
 #[derive(Serialize, Deserialize)]
 struct Data {
             Response: Response,
@@ -17,11 +17,11 @@ struct Data {
             Message: String,
             MessageData: String
 }
-
+*/
 #[derive(Serialize, Deserialize)]
-struct Response { 
+struct User { 
             iconPath: String,
-            membershipType: String,
+            membershipType: usize,
             membershipId: String,
             displayName: String,
 }
@@ -72,8 +72,8 @@ fn main() {
 		.expect("Failed to send request");
 	let mut buf = String::new();
 	response.read_to_string(&mut buf).expect("Failed to read response");
-	let user = get_json(buf);
-	let u: User = serde_json::from_str(&user).expect("failed to parse response");
+	let user = unwrap_initial_response(buf);
+	let u: User= deserialize_user(user);
 	let equipment = get_gear(&api_key, base_url, platform, u.membershipId, request_type);
 	println!("{}",equipment)
 }
@@ -102,14 +102,18 @@ fn get_gear(api_key:&String, base_url:String, platform: char, membershipId:Strin
 	buf
 }
 
-fn get_json(source:String) -> String {
+fn unwrap_initial_response(source:String) -> String {
   let start_index = source.find("[").expect("failed to find open");
   let end_index = source.find("]").expect("failed to find close");
   let mut result = &source[(start_index + 1)..end_index];
   result.to_string()
 }
   
-fn deserialize_json(ref mut buf:std::string::String) -> Item {
+fn deserialize_user(ref mut buf:std::string::String) -> User {
+  let u: User = serde_json::from_str(buf).expect("Failed to deserialize user info");
+  u
+}
+fn deserialize_item(ref mut buf:std::string::String) -> Item {
   let i: Item = serde_json::from_str(buf).expect("Failed to deserialize item");
   i
 }
