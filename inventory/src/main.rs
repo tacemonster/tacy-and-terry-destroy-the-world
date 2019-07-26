@@ -105,17 +105,20 @@ fn get_gear(api_key:&String, base_url:String, platform: char, membershipId:&Stri
 	buf
 }
 
-fn get_item(item_id2:String) -> String {
-	let mut item_id = String::from("2147998056");
-	let conn : Connection = Connection::open("world_sql_content_b6c7590005d9365b2723f8995f361e3f.content").unwrap();
-	let mut item:String = conn.query_row(
+fn get_item(item_id:String) -> String {
+	let conn:Connection = Connection::open("world_sql_content_b6c7590005d9365b2723f8995f361e3f.content")
+					.unwrap();
+	let mut query:String = 
+			format!(
 			r#"SELECT quote(json) 
 			FROM DestinyInventoryItemDefinition 
-			WHERE quote(json) like '%"itemHash":2147998056%'"#,
+			WHERE quote(json) like '%"itemHash":{}%'"#,
+			item_id);
+	let mut item:String = conn.query_row(
+			&query,
 			NO_PARAMS,
-			|row| row.get(0),
-			).unwrap();
-
+			|row| row.get(0),)
+			.unwrap();
 
 		println!("item: {}", item);
 	item
