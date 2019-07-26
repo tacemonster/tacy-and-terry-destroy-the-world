@@ -21,19 +21,17 @@ MessageData: String
 }
  */
 
-#[allow(non_snake_case)]
 #[derive(Serialize, Deserialize)]
-struct User { 
-iconPath: String,
+struct User {
+            iconPath: String,
             membershipType: usize,
             membershipId: String,
             displayName: String,
 }
 
-#[allow(non_snake_case)]
 #[derive(Serialize, Deserialize, Debug)]
 struct Item {
-itemHash: usize,
+            itemHash: usize,
             itemInstanceId: String,
             quantity: usize,
             bindStatus: usize,
@@ -77,74 +75,24 @@ fn main() {
     .expect("Failed to send request");
   let mut buf = String::new();
   response.read_to_string(&mut buf).expect("Failed to read response");
-  let user = unwrap_initial_response(buf);
-  let u: User= deserialize_user(user);
+  //let user = unwrap_initial_response(buf);
+  let user = unwrap_response(buf, 1);
+  let u: User= deserialize_user(user.first().expect("Failed to parse message correctly").to_string());
   let equipment = get_gear(&api_key, base_url, platform, u.membershipId, request_type);
   //println!("{}",equipment);
-  let response = unwrap_response_sections(equipment);
+  let response = unwrap_response(equipment, 5);
   /*
-  for val in response{
-    println!("{}", val);
-  }
-  */
-  let mut sections = Vec::new();
   for val in response {
-    let holder = unwrap_response_sections(val);
-    for item in holder {
-      sections.push(item);
-    }
-  }
-  /*
-  println!("{}", sections.len());
-  for val in sections {
-    println!("{:?}", val);
-  }
-  */
-  let mut categories = Vec::new();
-  for val in sections {
-    let holder = unwrap_response_sections(val);
-    for item in holder {
-      categories.push(item);
-    }
-  }
-  /*
-  for val in categories {
     println!("{:?}", val);
   }
   */
   let mut items = Vec::new();
-  for val in categories {
-    let holder = unwrap_response_sections(val);
-    for item in holder {
-      items.push(item);
-    }
+  for val in response {
+    items.push(deserialize_item(val));
   }
-  /*
   for val in items {
     println!("{:?}", val);
   }
-  */
-  //TODO if we need to keep them separated by the groups they came in, this is where that needs to happen.
-  let mut individuals = Vec::new();
-  for val in items {
-    let holder = unwrap_response_sections(val);
-    for item in holder {
-      individuals.push(item);
-    }
-  }
-  /*
-  for val in individuals {
-    println!("{:?}", val);
-  }
-  */
-  let mut all_items = Vec::new();
-  for val in individuals {
-    all_items.push(deserialize_item(val));
-  }
-  for val in all_items {
-    println!("{:?}", val);
-  }
-
 }
 
 fn get_gear(api_key:&String, base_url:String, platform: char, membershipId:String, request_type:String) -> String {
@@ -171,13 +119,6 @@ fn get_gear(api_key:&String, base_url:String, platform: char, membershipId:Strin
   buf
 }
 
-fn unwrap_initial_response(source:String) -> String {
-  let start_index = source.find("[").expect("failed to find open");
-  let end_index = source.find("]").expect("failed to find close");
-  let result = &source[(start_index + 1)..end_index];
-  result.to_string()
-}
-
 fn deserialize_user(ref mut buf:String) -> User {
   let u: User = serde_json::from_str(buf).expect("Failed to deserialize user info");
   u
@@ -187,7 +128,7 @@ fn deserialize_item(ref mut buf:String) -> Item {
   i
 }
 
-fn unwrap_response_sections(source:String) -> Vec<String> {
+fn unwrap_response(source:String, depth:usize) -> Vec<String> {
   let mut results = Vec::new();
   let mut starts = Vec::new();
   let mut ends = Vec::new();
@@ -197,16 +138,16 @@ fn unwrap_response_sections(source:String) -> Vec<String> {
   for guy in chars {
     if guy.1 == '{' {
       open += 1;
-      if open == close + 2 {    //ignore first one to unwrap!
+      if open == close + depth + 1 {    
         starts.push(guy.0);
       }
     }
     else if guy.1 == '}' {
       close += 1;
-      if open == close + 1 {
+      if open == close + depth {
         ends.push(guy.0);
-        open = 1;
-        close = 0;
+        open -= 1;
+        close -= 1;
       }
     }
   }
@@ -216,6 +157,7 @@ fn unwrap_response_sections(source:String) -> Vec<String> {
   }
   results
 }
+
 /*
 //fn get_json(source:String, start:str, end:str) -> String {
 fn get_json(source:String) -> String {
@@ -224,7 +166,6 @@ let end_index = source.find("2305843009260353575").expect("failed to find close"
 let mut result = &source[(start_index + 31)..(end_index - 4)];
 result.to_string()
 }
- */
 fn split_inventory(mut source:String) -> Vec<String> {
   let mut results = Vec::new();
   while !source.is_empty() {
@@ -238,11 +179,11 @@ fn split_inventory(mut source:String) -> Vec<String> {
   }
   results
 }
+fn unwrap_initial_response(source:String) -> String {
+  let start_index = source.find("[").expect("failed to find open");
+  let end_index = source.find("]").expect("failed to find close");
+  let result = &source[(start_index + 1)..end_index];
+  result.to_string()
+}
 
-
-
-
-
-
-
-
+ */
