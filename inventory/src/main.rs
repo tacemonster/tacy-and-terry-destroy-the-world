@@ -7,9 +7,7 @@ use rusqlite::NO_PARAMS;
 use std::collections::HashMap;
 use rustc_serialize::json::Json;
 
-use serde::{Deserialize, Serialize};
-use serde_json::{Deserializer, Value};
-use serde_json::Result;
+use serde_json::Value;
 
 fn main() {
   let api_key = get_api_key();
@@ -18,7 +16,6 @@ fn main() {
   let platform = '2';
   let player_name = String::from("cortical_iv");
   let url = String::from("https://www.bungie.net/Platform/Destiny2/");
-  let item_id = String::from("6917529095138904228");//TODO variable for testing (delete when not needed)
 
   let mut search_url = url.clone();
   search_url.push_str("SearchDestinyPlayer/");
@@ -32,66 +29,35 @@ fn main() {
     .header("X-API-KEY", api_key.clone())
     .send()
     .expect("Failed to send request");
-  //println!("{}",response);
+
   let mut buf = String::new();
   response.read_to_string(&mut buf).expect("Failed to read response");
   println!("{}", buf);
   buf = fix_json(buf);
   let info : Value = serde_json::from_str(&buf).expect("Failed to parse response!");
-  //let user = response["Response"].to_string();
   println!("{}",info["Response"]["membershipId"]);
   let membershipId = strip_quotes(info["Response"]["membershipId"].to_string());
   println!("{}",membershipId);
-  /*
-     let hold_items = unwrap_response(buf, 3);
-     if hold_items.is_empty() {
-     println!("unwrap response failed somehow");
-     }
-     else {
-     let mut items = Deserializer::from_str(&hold_items[0]).into_iter::<Value>();
-     for item in items {
-     println!("{}", item.unwrap()["itemHash"]);
-     }
-     }
-   */
-  //let info : Value = serde_json::from_str(&buf).expect("Failed to parse response!");
-  //let user = response["Response"].to_string();
-  //println!("{}",info["Response"]["membershipId"]);
-  //let reparse = json::parse(&user).expect("failed parsing user");
-  //let name = reparse["displayName"].clone();
-  //println!("{}",name);
-  /*
-     let mut buf = String::new();
-     response.read_to_string(&mut buf).expect("Failed to read response");
-     let user = unwrap_initial_response(buf);
-     let u: User= deserialize_user(user);
-   */
-     let base_url=url.clone();	
-  let equipment = get_gear(&api_key, base_url, platform, &membershipId, &request_type);
-  //println!("{}", equipment);
+  let items = all_equipment(membershipId, platform, request_type);
+}
+
+fn all_equipment(membershipId:String, platform:char, request_type:String)-> Vec<String> {
+  let mut results = Vec::new();
+  let base_url = String::from("https://www.bungie.net/Platform/Destiny2/");
+  let equipment = get_gear(base_url, platform, &membershipId, &request_type);
   let hold_items = unwrap_response(equipment, 5);
   if hold_items.is_empty() {
     println!("unwrap response failed somehow");
   }
   else {
     for item in hold_items {
-      let item_json:serde_json::Value = serde_json::from_str(&item).unwrap();
-      //items.push(serde_json::from_str(&hold_items[0]));
+      let item_json : Value = serde_json::from_str(&item).unwrap();
       let itemHash:String = item_json["itemHash"].to_string();
       println!("{}", itemHash);
+      results.push(itemHash);
     }
-    //for item in items {
-    //}
   }
-
-  //let mut item = get_item(item_id);
-  //let cutoff = item.find("stats").expect("did not find stats section!");
-  //item.truncate(cutoff - 2);
-  //item.push('}');
-  //println!("{}", item);
-  //let i: ItemDetails = serde_json::from_str(&item[1..]).expect("Failed to deserialize user info");
-  //println!("{}",i.itemName)
-  //https://www.bungie.net/Platform/2/Profile/4611686018459314819/item/6917529095138904228
+  results
 }
 
 
@@ -101,20 +67,14 @@ fn get_api_key() -> String {
   f.read_to_string(&mut key).expect("could not read api key");
   key.trim().to_string()
 }
+
 fn strip_quotes(source:String) -> String {
   let start_index = source.find("\"").expect("failed to find open");
   let end_index = source.rfind("\"").expect("failed to find close");
   if start_index == end_index {
-    return String::new();
+    return source;
   }
-  let mut result = &source[(start_index + 1)..end_index];
-  result.to_string()
-}
-
-fn unwrap_initial_response(source:String) -> String {
-  let start_index = source.find("[").expect("failed to find open");
-  let end_index = source.find("]").expect("failed to find close");
-  let mut result = &source[(start_index + 1)..end_index];
+  let result = &source[(start_index + 1)..end_index];
   result.to_string()
 }
 
@@ -148,7 +108,7 @@ fn unwrap_response(source:String, depth:usize) -> Vec<String> {
   results
 }
 
-fn get_gear(api_key:&String, base_url:String, platform: char, membershipId:&String, request_type:&String) -> String {
+fn get_gear(base_url:String, platform: char, membershipId:&String, request_type:&String) -> String {
   let api_key = get_api_key();
   let mut url = base_url;
   //100 is profiles, 200 is characters, 201 is non-equiped items, 205 currently equiped items.
@@ -181,87 +141,9 @@ fn get_item(item_id2:String) -> String {
       NO_PARAMS,
       |row| row.get(0),
       ).unwrap();
-
-
   println!("item: {}", item);
   item
 }
-
-/*
-#[derive(Debug)]
-struct item_name {
-name: String
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct MessageData {
-}
-#[derive(Serialize, Deserialize)]
-struct ItemDetails {
-itemHash: usize,
-itemName: String,
-itemDescription: String,
-icon: String,
-hasIcon: bool,
-secondaryIcon: String,
-actionName: String,
-hasAction: bool,
-deleteOnAction: bool,
-tierTypeName: String,
-tierType: usize,
-itemTypeName: String,
-bucketTypeHash: usize,
-primaryBaseStatHash: usize
-}
-
-#[derive(Serialize, Deserialize)]
-struct User { 
-iconPath: String,
-membershipType: usize,
-membershipId: String,
-displayName: String
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct ItemResponse {
-Response: CharacterEquipment,
-ErrorCode: u32,
-ThrottleSeconds: u32,
-ErrorStatus: String,
-Message: String,
-MessageData: MessageData,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct CharacterEquipment {
-data: Data,
-}
-#[derive(Serialize, Deserialize, Debug)]
-struct Data {
-/*
-String,
-Items: vec<Item>
-String,
-Items: vec<Item>
-String,
-Items: vec<Item>
- */
-}
-#[derive(Serialize, Deserialize, Debug)]
-struct Item {
-itemHash: usize,
-            itemInstanceId: String,
-            quantity: usize,
-            bindStatus: usize,
-            location: usize,
-            bucketHash: usize,
-            transferStatus: usize,
-            lockable: bool,
-            state: usize,
-            dismantlePermission: usize,
-            isWrapper: bool
-}
-*/
 
 
 fn fix_json(mut buf:String) -> String {
@@ -295,37 +177,6 @@ fn fix_json(mut buf:String) -> String {
   }
   buf
 }
-
-/*
-   fn deserialize_user(ref mut buf:std::string::String) -> User {
-   let u: User = serde_json::from_str(buf).expect("Failed to deserialize user info");
-   u
-   }
-
-   fn deserialize_item(ref mut buf:std::string::String) -> Item {
-   let i: Item = serde_json::from_str(buf).expect("Failed to deserialize item");
-   i
-   }
-
-
-   fn split_inventory(mut source:String) -> Vec<String> {
-   let mut results = Vec::new();
-   while !source.is_empty() {
-   let start = source.find("{").expect("Failed to find start of item");
-   let end = source.find("}").expect("Failed to find end of item");
-   let item = &source[start..(end+1)];
-   if !item.is_empty() {
-   results.push(item.to_string());
-   }
-   source = source[(end+1)..].to_string();
-   }
-   results
-   }
-
- */
-
-
-
 
 
 
