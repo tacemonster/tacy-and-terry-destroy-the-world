@@ -47,13 +47,6 @@ itemHash: usize,
 }
 
 
-fn get_api_key() -> String {
-  let mut f = std::fs::File::open("api-key.txt").expect("could not open api key");
-  let mut key = String::new();
-  f.read_to_string(&mut key).expect("could not read api key");
-  key.trim().to_string()
-}
-
 
 fn main() {
   let api_key = get_api_key();
@@ -63,23 +56,11 @@ fn main() {
   let player_name = String::from("cortical_iv");
   let base_url = String::from("https://www.bungie.net/Platform/Destiny2/");
 
-  let mut search_url = base_url.clone();
-  search_url.push_str("SearchDestinyPlayer/");
-  search_url.push(platform);
-  search_url.push('/');
-  search_url.push_str(&player_name);
-  search_url.push('/');
-
-  let mut response = reqwest::Client::new()
-    .get(&search_url)
-    .header("X-API-KEY", api_key.clone())
-    .send()
-    .expect("Failed to send request");
-  let mut buf = String::new();
-  response.read_to_string(&mut buf).expect("Failed to read response");
-  let user = unwrap_initial_response(buf);
+ let member_info = get_member_id(&api_key, &base_url, platform, player_name, &request_type);
+ println!("{}", member_info);
+  let user = unwrap_initial_response(member_info);
   let u: User= deserialize_user(user);
-  let equipment = get_gear(&api_key, base_url, platform, u.membershipId, request_type);
+  let equipment = get_gear(&api_key, &base_url, platform, u.membershipId, request_type);
   //println!("{}",equipment);
   let response = unwrap_response_sections(equipment);
   /*
@@ -147,9 +128,37 @@ fn main() {
 
 }
 
-fn get_gear(api_key:&String, base_url:String, platform: char, membershipId:String, request_type:String) -> String {
+fn get_api_key() -> String {
+  let mut f = std::fs::File::open("api-key.txt").expect("could not open api key");
+  let mut key = String::new();
+  f.read_to_string(&mut key).expect("Could not read api key, check that api-key.txt has correct API key!");
+  key.trim().to_string()
+}
+
+fn get_member_id(api_key: &String, base_url: &String, platform: char, player_name: String, request_type: &String) -> String {
+  let mut search_url = base_url.clone();
+  search_url.push_str("SearchDestinyPlayer/");
+  search_url.push(platform);
+  search_url.push('/');
+  search_url.push_str(&player_name);
+  search_url.push('/');
+
+  let mut response = reqwest::Client::new()
+    .get(base_url)
+    .header("X-API-KEY", api_key.clone())
+    .send()
+    .expect("Failed to send request");
+  let mut buf = String::new();
+  response.read_to_string(&mut buf).expect("Failed to read response");
+  if buf == "" {
+	  	String::from("Characters not found")
+	  } else {
+		unwrap_initial_response(buf)
+	  }
+}
+fn get_gear(api_key:&String, base_url: &String, platform: char, membershipId: String, request_type:String) -> String {
   let api_key = get_api_key();
-  let mut url = base_url;
+  let mut url = base_url.clone();
   //100 is profiles, 200 is characters, 201 is non-equiped items, 205 currently equiped items.
   let request_type = String::from("205");
 
@@ -240,9 +249,47 @@ fn split_inventory(mut source:String) -> Vec<String> {
 }
 
 
+//Test section
+pub fn hello() -> String {
+  let platform = String::from("2");
+  platform
+}
 
+#[test]
+fn first_test() {
+	assert_eq!(hello(),"2")
+}
 
+/*
+#[test]
+fn test_get_api_key() {
+	assert_ne!(get_api_key(),"Could not read api key, check that api-key.txt has correct API key!");
+}
 
+#[test]
+fn get_gear_valid() {
+	assert_eq!("
+fn get_gear(api_key:&String, base_url:String, platform: char, membershipId:String, request_type:String) -> String {
+  let api_key = get_api_key();
+  let mut url = base_url;
+  //100 is profiles, 200 is characters, 201 is non-equiped items, 205 currently equiped items.
+  let request_type = String::from("205");
 
+  url.push(platform);
+  url.push_str("/Profile/");
+  url.push_str(&membershipId);
+  url.push_str("/?components=");
+  url.push_str(&request_type);
+  //let mut url = String::from("https://www.bungie.net/Platform/Destiny2/2/Profile/4611686018459314819/?components=205");
 
-
+  let mut response = reqwest::Client::new()
+    .get(&url)
+    .header("X-API-KEY", api_key)
+    .send()
+    .expect("Failed to send request");
+  let mut buf = String::new();
+  response.read_to_string(&mut buf).expect("Failed to read response");
+  //println!("{}", buf);
+  buf
+}
+*/
