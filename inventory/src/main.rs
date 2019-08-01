@@ -13,8 +13,10 @@ fn main() {
   let api_key = get_api_key();
   //100 is profiles, 200 is characters, 201 is non-equiped items, 205 currently equiped items.
   let request_type = String::from("205");
-  let platform = '2';
-  let player_name = String::from("cortical_iv");
+  //let platform = '2';
+  let platform = '4';
+  //let player_name = String::from("cortical_iv");
+  let player_name = String::from("shark90%231673");
   let url = String::from("https://www.bungie.net/Platform/Destiny2/");
 
   let mut search_url = url.clone();
@@ -23,6 +25,7 @@ fn main() {
   search_url.push('/');
   search_url.push_str(&player_name);
   search_url.push('/');
+  println!("{}", search_url);
 
   let mut response = reqwest::Client::new()
     .get(&search_url)
@@ -62,7 +65,10 @@ fn all_equipment(membershipId:String, platform:char, request_type:String)-> Vec<
     for item in hold_items {
       let item_json : Value = serde_json::from_str(&item).unwrap();
       let itemHash:String = item_json["itemHash"].to_string();
-      println!("{}", itemHash);
+      //let itemHash:String = item_json["itemInstanceId"].to_string();
+      //let itemId = strip_quotes(itemHash);
+      //println!("{}", itemHash);
+      //results.push(itemId);
       results.push(itemHash);
     }
   }
@@ -168,6 +174,7 @@ fn unwrap_response(source:String, depth:usize) -> Vec<String> {
 }
 
 fn get_item(item_id:String) -> String {
+  println!("{}", item_id);
 	let conn:Connection = Connection::open("world_sql_content_b6c7590005d9365b2723f8995f361e3f.content")
 					.unwrap();
 	let mut query:String = 
