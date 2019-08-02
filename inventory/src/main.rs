@@ -1,17 +1,31 @@
-///Tacy Bechtel and Terry Tower
-use serde_json::Value;
+// Copyright © 2018 Tacy Bechtel and Terry Tower
+// [This program is licensed under the "GNU License"]
+// Please see the file LICENSE in the source
+// distribution of this software for license terms.
+
+///The serde_json crate is useful for parsing json objects.
+use serde_json::Value; 
+///The std Read module is needed to pull the API key from an external file.
 use std::io::Read;
 
 fn main() {
+    //Keeping the API key in a seperate file prevents it from being accidently commited to the repo.
+    //If the get_api_key() fails make sure that it is stored in a text file named api-key.txt
     let api_key = get_api_key();
+    
+    //The platform corresponds to where the game is being played.
+    //2 is xBox and 4 is PC
     let platform = '2';
     //let platform = '4';
+    //Gamer tags are plane for xBox, PC names need '%23' to represent the pound sign and then the Battle.net identifier appended to the name
     let player_name = String::from("cortical_iv");
     //let player_name = String::from("shark90%231673");
-
+	
+    //get_member_id(api_key::String, platform::char, player_name::String) -> String
     let mut membership_id = get_member_id(&api_key, platform, player_name);
-
-    membership_id = strip_quotes(membership_id);
+    //strip_quotes(membership_id) -> String
+    membership_id = strip_quotes(membership_id);//removes quotes
+    //all_equipment(api_key::String, membership_id::String, platform::char) -> Vec <String>
     let items = all_equipment(&api_key, membership_id, platform);
     println!("\n\nYou are equipped with the following items:\n");
     print_equipped(items);
@@ -57,42 +71,57 @@ fn all_equipment(api_key: &str, membership_id: String, platform: char) -> Vec<St
 }
 
 fn get_api_key() -> String {
-    let mut f = std::fs::File::open("api-key.txt").expect("could not open api key");
+    //The API key is kept in a seperate file to allow for a simple line in .gitignore to prevent upload to git
+    let mut f = std::fs::File::open("api-key.txt")
+    	.expect("Could not open api-key.txt");
+    //key will hold location where API will be stored.
     let mut key = String::new();
+    //from file to string to be used for future functions
     f.read_to_string(&mut key)
         .expect("Could not read api key, check that api-key.txt has correct API key!");
+    //remove whitespace
     key.trim().to_string()
 }
 
 fn strip_quotes(source: String) -> String {
+    //strip_quotes() is used to remove quotation marks from string retrieved from json objects
+    //check for first quote
     let start_index = source.find('\"').expect("failed to find open");
+    //check for last quote
     let end_index = source.rfind('\"').expect("failed to find close");
+    //check that first is not same as last
     if start_index == end_index {
         return source;
     }
+    //remove characters outside the quotes
     let result = &source[(start_index + 1)..end_index];
     result.to_string()
 }
 
 fn get_member_id(api_key: &str, platform: char, player_name: String) -> String {
+    //get_member_id() is used to get the unique identifier that Bungie uses to identify the player
+    //First the url to submit the query needs to be built
     let mut search_url = String::from("https://www.bungie.net/Platform/Destiny2/");
     search_url.push_str("SearchDestinyPlayer/");
     search_url.push(platform);
     search_url.push('/');
     search_url.push_str(&player_name);
     search_url.push('/');
-
+    //The contructed url then needs to be sent with the API key attached the the header
     let mut response = reqwest::Client::new()
         .get(&search_url)
         .header("X-API-KEY", api_key.clone())
         .send()
         .expect("Failed to send request");
+    //location for responce from Bungie
     let mut buf = String::new();
     response
         .read_to_string(&mut buf)
         .expect("Failed to read response");
+    //Player did not have a match in player database
     if buf == "" {
-        String::from("Characters not found")
+        String::from("Player not found")
+    //Player was found and membershipId is returned as part of a json object
     } else {
         buf = fix_json(buf);
         let info: Value = serde_json::from_str(&buf).expect("Failed to parse response!");
@@ -100,21 +129,23 @@ fn get_member_id(api_key: &str, platform: char, player_name: String) -> String {
     }
 }
 fn get_gear(api_key: &str, platform: char, membership_id: String) -> String {
+    //get_gear() takes the player's info and returns a json object that contains metadata about the character they are playing.
+    //Query url needs to be built
     let mut url = String::from("https://www.bungie.net/Platform/Destiny2/");
-    //100 is profiles, 200 is characters, 201 is non-equiped items, 205 currently equiped items.
+    //100 is profiles, 200 is characters, 201 is non-equiped items, 205 currently equiped items (the option that we want).
     let request_type = String::from("205");
-
     url.push(platform);
     url.push_str("/Profile/");
     url.push_str(&membership_id);
     url.push_str("/?components=");
     url.push_str(&request_type);
-
+    //The query is sent to Bungie
     let mut response = reqwest::Client::new()
         .get(&url)
         .header("X-API-KEY", api_key.clone())
         .send()
         .expect("Failed to send request");
+    //responce is stored
     let mut buf = String::new();
     response
         .read_to_string(&mut buf)
@@ -151,19 +182,21 @@ fn unwrap_response(source: String, depth: usize) -> Vec<String> {
     results
 }
 fn get_item(item_id: String) -> String {
-    //https://www.bungie.net/Platform/Destiny2/Manifest/DestinyInventoryItemDefinition/1345867571
+    //get_item takes the item identifier metadata and gets the information from Bungie
     let api_key = get_api_key();
+    //url is built
     let mut url = String::from(
         "https://www.bungie.net/Platform/Destiny2/Manifest/DestinyInventoryItemDefinition/",
     );
     url.push_str(&item_id);
-
+    //built url is sent to Bungie
     let mut response = reqwest::Client::new()
         .get(&url)
         .header("X-API-KEY", api_key)
         .send()
         .expect("Failed to send request");
     let mut buf = String::new();
+    //the responce is stored
     response
         .read_to_string(&mut buf)
         .expect("Failed to read response");
