@@ -10,7 +10,6 @@ json = "*"
 serde = "*"
 serde_json = "*"
 rustc-serialize = "*"
-rusqlite = "*"
 
 [[bin]]
 name = "main"

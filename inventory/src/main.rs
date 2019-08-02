@@ -1,9 +1,6 @@
 #![allow(non_snake_case)]
 use std::io::Read;
 
-use rusqlite::types::ToSql;
-use rusqlite::{Connection, Result as Output};
-use rusqlite::NO_PARAMS;
 use std::collections::HashMap;
 use rustc_serialize::json::Json;
 
@@ -172,29 +169,23 @@ fn unwrap_response(source:String, depth:usize) -> Vec<String> {
   }
   results
 }
-
 fn get_item(item_id:String) -> String {
-  println!("{}", item_id);
-	let conn:Connection = Connection::open("world_sql_content_b6c7590005d9365b2723f8995f361e3f.content")
-					.unwrap();
-	let mut query:String = 
-			format!(
-			r#"SELECT quote(json) 
-			FROM DestinyInventoryItemDefinition 
-			WHERE quote(json) like '%"itemHash":{}%'"#,
-			item_id);
-	let mut item = conn.query_row(
-			&query,
-			NO_PARAMS,
-			|row| row.get(0),);
-        match &item {
-          Ok(name) => return item.unwrap(),
-          //println!("No item equipped");
-          Err(error) => return String::new(),
+//https://www.bungie.net/Platform/Destiny2/Manifest/DestinyInventoryItemDefinition/1345867571
+	let api_key = get_api_key();
+	let mut url = String::from("https://www.bungie.net/Platform/Destiny2/Manifest/DestinyInventoryItemDefinition/");
+	url.push_str(&item_id);
 
-        }
-        String::new()
+	let mut response = reqwest::Client::new()
+		.get(&url)
+		.header("X-API-KEY", api_key)
+		.send()
+		.expect("Failed to send request");
+	let mut buf = String::new();
+	response.read_to_string(&mut buf).expect("Failed to read response");
+	//println!("{}", buf);
+	buf
 }
+
 
 fn fix_json(mut buf:String) -> String {
   let mut index = buf.find("[");
