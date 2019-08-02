@@ -1,16 +1,22 @@
 [package]
-name = "tacy-and-terry-destroy-the-world"
+name = "inventory"
 version = "0.1.0"
-authors = ["Bart Massey <bart@cs.pdx.edu>"]
+authors = ["darkTower@cat.pdx.edu <tet2@pdx.edu>"]
 edition = "2018"
 
-[dependencies]
-reqwest = "*"
-json = "*"  
-serde = "*"
-serde_json = "*"
-rustc-serialize = "*"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [[bin]]
-name = "main"
-path = "inventory/src/main.rs"
+name = "inventory"
+path = "src/main.rs"
+
+[lib]
+name = "inventory"
+path = "src/lib.rs"
+
+[dependencies]
+serde = "1.0.97"
+serde_json = "1.0.40"
+reqwest = "0.9.19"
+rustc-serialize = "0.3.24"
+rusqlite = "0.19.0"
