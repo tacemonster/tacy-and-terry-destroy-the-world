@@ -10,10 +10,10 @@ fn main() {
   let api_key = get_api_key();
   //100 is profiles, 200 is characters, 201 is non-equiped items, 205 currently equiped items.
   let request_type = String::from("205");
-  //let platform = '2';
-  let platform = '4';
-  //let player_name = String::from("cortical_iv");
-  let player_name = String::from("shark90%231673");
+  let platform = '2';
+  //let platform = '4';
+  let player_name = String::from("cortical_iv");
+  //let player_name = String::from("shark90%231673");
   let url = String::from("https://www.bungie.net/Platform/Destiny2/");
 
   let mut search_url = url.clone();
@@ -22,7 +22,7 @@ fn main() {
   search_url.push('/');
   search_url.push_str(&player_name);
   search_url.push('/');
-  println!("{}", search_url);
+  //println!("{}", search_url);
 
   let mut response = reqwest::Client::new()
     .get(&search_url)
@@ -32,21 +32,32 @@ fn main() {
 
   let mut buf = String::new();
   response.read_to_string(&mut buf).expect("Failed to read response");
-  println!("{}", buf);
+  //println!("{}", buf);
   buf = fix_json(buf);
   let info : Value = serde_json::from_str(&buf).expect("Failed to parse response!");
-  println!("{}",info["Response"]["membershipId"]);
+  //println!("{}",info["Response"]["membershipId"]);
   let membershipId = strip_quotes(info["Response"]["membershipId"].to_string());
-  println!("{}",membershipId);
+  //println!("{}",membershipId);
   let items = all_equipment(membershipId, platform, request_type);
+  println!("You are equipped with the following items:");
   for item in items {
-    let name = get_item(item);
-    if name.is_empty() {
-      println!("Nothing equipped!");
+    let item_detail = get_item(item);
+    if item_detail.is_empty() {
+      continue;
     }
     else {
-      println!("{}", name);
+      let unwrapped_item : Value = serde_json::from_str(&item_detail).expect("Failure while parsing item details");
+      let mut name = &unwrapped_item["Response"]["displayProperties"]["name"];
+      
+      let name = strip_quotes(name.to_string());
+      let description = &unwrapped_item["Response"]["displayProperties"]["description"];
+      let mut description = strip_quotes(description.to_string());
+      description = description.replace("\\n", " \n\t");
+      description = description.replace("\\", "");
+
+      println!("{}: {}\n", name, description);
     }
+
   }
 }
 
