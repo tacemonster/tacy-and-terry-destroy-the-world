@@ -3,41 +3,57 @@
 // Please see the file LICENSE in the source
 // distribution of this software for license terms.
 
+/// In order to use this program, you will need to get an API key
+/// from bungie.net and put it in a file called api-key.txt.
+
 ///The serde_json crate is useful for parsing json objects.
 use serde_json::Value; 
 ///The std Read module is needed to pull the API key from an external file.
 use std::io::Read;
 
+
 pub fn print_equipped(items: Vec<String>) {
     for item in items {
+        // call get_item function
         let item_detail = get_item(item);
+        // if the item is not found by the get_item call, we want to move on.
         if item_detail.is_empty() {
             continue;
         } else {
+            // unwrap the item as a serde_json Value type
             let unwrapped_item: Value =
                 serde_json::from_str(&item_detail).expect("Failure while parsing item details");
+            // get the values we want (name and description)
             let jname = &unwrapped_item["Response"]["displayProperties"]["name"];
-            let name = strip_quotes(jname.to_string());
             let jdescription = &unwrapped_item["Response"]["displayProperties"]["description"];
+            // strip the quote marks from the values (Rust reads them as string literals)
+            let name = strip_quotes(jname.to_string());
             let mut description = strip_quotes(jdescription.to_string());
+            // if the item has no description, provide the generic entry
             if description.is_empty() {
                 description = "An item so awesome it cannot be described".to_string();
+            } else {
+                // remove/replace other literals we don't want!
+                description = description.replace("\\n", " \n");
+                description = description.replace("\\", "");
             }
-            description = description.replace("\\n", " \n");
-            description = description.replace("\\", "");
-
+            // print the results
             println!("{}: {}\n", name, description);
         }
     }
 }
 
+
 pub fn all_equipment(api_key: &str, membership_id: String, platform: char) -> Vec<String> {
     let mut results = Vec::new();
+    // call get_gear to connect with Destiny API
     let equipment = get_gear(api_key, platform, membership_id);
+    // call unwrap_response to remove outer portions of code we don't need (see function for details)
     let hold_items = unwrap_response(equipment, 5);
     if hold_items.is_empty() {
         println!("unwrap response failed somehow");
     } else {
+        //create the vector of item hash strings that will be given to print_equipment later
         for item in hold_items {
             let item_json: Value = serde_json::from_str(&item).unwrap();
             let item_hash = item_json["itemHash"].to_string();
@@ -62,6 +78,7 @@ pub fn get_api_key() -> String {
 
 pub fn strip_quotes(source: String) -> String {
     //strip_quotes() is used to remove quotation marks from string retrieved from json objects
+    //removes the outermost pair of quotation marks in a string.
     //check for first quote
     let start_index = source.find('\"').expect("failed to find open");
     //check for last quote
@@ -70,6 +87,7 @@ pub fn strip_quotes(source: String) -> String {
     if start_index == end_index {
         return source;
     }
+    //reove the quotes. will also remove any characters outside the quotes, so function must be used carefully
     //remove characters outside the quotes
     let result = &source[(start_index + 1)..end_index];
     result.to_string()
@@ -132,6 +150,10 @@ pub fn get_gear(api_key: &str, platform: char, membership_id: String) -> String 
 }
 
 pub fn unwrap_response(source: String, depth: usize) -> Vec<String> {
+    // this one was... fun. due to the varying formats of the jsons returned from
+    // our API calls, this function uses a depth integer to indicate
+    // how many opening curly brackets we want to ignore when pulling our
+    // data out of the source
     let mut results = Vec::new();
     let mut starts = Vec::new();
     let mut ends = Vec::new();
@@ -141,11 +163,15 @@ pub fn unwrap_response(source: String, depth: usize) -> Vec<String> {
     for guy in chars {
         if guy.1 == '{' {
             open += 1;
+            // once we reach the correct number of brackets to ignore,
+            // we then want to start grabbing the indices where we find open brackets
             if open == close + depth + 1 {
                 starts.push(guy.0);
             }
         } else if guy.1 == '}' {
             close += 1;
+            // if we have found the end of one of the pieces we want,
+            // get its closing index and reduce the open and close counts
             if open == close + depth {
                 ends.push(guy.0);
                 open -= 1;
@@ -153,6 +179,9 @@ pub fn unwrap_response(source: String, depth: usize) -> Vec<String> {
             }
         }
     }
+    // we should now have vector "starts" with some number of opening indices
+    // and vector "ends" with the corresponding closing indices
+    // not we populate "results" with the corresponing substrings
     let sections = starts.len();
     for index in 0..sections {
         results.push(source[starts[index]..=ends[index]].to_string());
@@ -184,27 +213,21 @@ pub fn get_item(item_id: String) -> String {
 }
 
 pub fn fix_json(mut buf: String) -> String {
+    // this function exists because I could not get serde_json to play nicely with
+    // jsons that had structs as the values of key-value pairs. By removing the
+    // square brackets around these structs, I was able to get everything running
+
+    // first remove opening brackets
     let mut index = buf.find('[');
     while index != None {
         let indexno = index.unwrap() as usize;
-        let mut tempbuf = buf.as_str().char_indices();
-        let mut i = 0;
-        while i <= indexno {
-            tempbuf.next();
-            i += 1;
-        }
         buf.remove(indexno);
         index = buf[indexno + 1..].find('[');
     }
+    // then remove closing brackets!
     index = buf.find(']');
     while index != None {
         let indexno = index.unwrap() as usize;
-        let mut tempbuf = buf.as_str().char_indices();
-        let mut i = 0;
-        while i <= indexno {
-            tempbuf.next();
-            i += 1;
-        }
         buf.remove(indexno);
         index = buf[indexno + 1..].find(']');
     }
