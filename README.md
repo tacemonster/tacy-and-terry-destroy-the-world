@@ -1,6 +1,4 @@
 Copyright © 2018 Tacy Bechtel and Terry Tower
-This program is licensed under the "GNU License"
-Please see the file LICENSE in the source distribution of this software for license terms.
 
 # Purpose 
 
@@ -15,9 +13,9 @@ The other two parameters will be passed in from the command line in the style
 cargo run [platform] [player name]
 ```
 
-Destiny can be played on Playstation, Xbox, or Computer. Each of these platforms are isolated from reach other. In order to access the correct set of databases the platform identifier is included in the API request. The platform is encoded with the following identifiersi: 1 identifies with Xbox, 2 with the Playstation 4, and 4 with a computer.
+If you don't provide both values, the program will run using hard-coded values.
 
-If you want to test it out but don't have a palyer name, feel free to use *shark90%231673* 
+Destiny can be played on Playstation, Xbox, or Computer. Each of these platforms are isolated from reach other. In order to access the correct set of databases the platform identifier is included in the API request. The platform is encoded with the following identifiers: 1 identifies with Xbox, 2 with the Playstation 4, and 4 with a computer.
 
 # Implementations
 
