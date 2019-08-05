@@ -11,7 +11,7 @@ Destiny can be played on Playstation, Xbox, or Computer. Each of these platforms
 The third is the player's name. This can be oberved by looking at the player and recording the name or looking into the roster tabe and the name of every member of your party will be displayed there. 
 
 This program is heavily reliant to the API interface that Bungie provides. When the information required has been entered an initial request is sent to Bungie. This request requires the player name and platform to construct the correct url to send. This request also requires the api key attached to header when the request is sent. The responce is then parced to obtain the member id. This is how Bungie trackes each player. The member id is then used to obtain what gear a player has equiped at any given time. The responce to this request is a set of gear ids imbeded in a json object. Each of these items used to be kept in an SQLite database. This is no longer required and this information can now be requested using the API. 
-The item names and flavor text is taken from the response to these resent calls and displayed. 
+The item names and flavor text is taken from the response to these recent calls and displayed. 
 
 Features to add:
 - add a CLI that will accept player's name and platform and then search.
