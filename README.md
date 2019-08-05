@@ -8,11 +8,7 @@ This program allows a user to check what gear a player is using. The program nee
 
 # Usage
 
-The API key needs to be stored in a file named "api-key.txt". This file needs to be located along side main.rs and lib.rs in the src directory. This key can be obtained from [Bungie](https://www.bungie.net/en/Application]).
-
-This program allows a user to check what gear a player is using. The program needs to be provided with three pieces of information: first, an API key; second, the platform that the player is using; and third, the character's name.
-
-The API key needs to be stored in a file named "api-key.txt". This file needs to be located in the directory where you will run the code. This will most likely be the main directory. **along side main.rs and lib.rs in the src directory.** This key can be obtained from Bungie[https://www.bungie.net/en/Application].
+The API key needs to be stored in a file named "api-key.txt". This file needs to be located in the directory from which you will run the code. This will typically be the main directory or the src directory. This key can be obtained from [Bungie](https://www.bungie.net/en/Application]).
 
 The other two parameters will be passed in from the command line in the style
 ```
