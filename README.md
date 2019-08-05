@@ -3,9 +3,15 @@
 // Please see the file LICENSE in the source
 // distribution of this software for license terms.
 
-This program allows a user to check what gear a player is using. The program needs to be provided with three pieces of information. The first is an API key.  The second is the platform that the player is using.The third the the characters name.
+This program allows a user to check what gear a player is using. The program needs to be provided with three pieces of information: first, an API key; second, the platform that the player is using; and third, the character's name.
 
-The API key needs to be stored in a file named "api-key.txt". This file needs to be located along side main.rs and lib.rs in the src directory. This key can be obtained from Bungie[https://www.bungie.net/en/Application].
+The API key needs to be stored in a file named "api-key.txt". This file needs to be located in the directory where you will run the code. This will most likely be the main directory. **along side main.rs and lib.rs in the src directory.** This key can be obtained from Bungie[https://www.bungie.net/en/Application].
+
+The other two parameters will be passed in from the command line in the style
+```
+cargo run [platform] [player name]
+```
+
 Destiny can be played on Playstation, Xbox, or Computer. Each of these platforms are isolated from reach other. In order to access the correct set of databases the platform identifier is included in the API request. The platform is encoded with the following identifiers 1 identifies with Xbox, 2 with the Playstation 4, and 4 with a computer.
 
 The third is the player's name. This can be oberved by looking at the player and recording the name or looking into the roster tabe and the name of every member of your party will be displayed there. 
