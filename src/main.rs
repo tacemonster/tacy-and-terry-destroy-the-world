@@ -9,7 +9,7 @@ fn main() {
     let api_key = inventory::get_api_key();
     
     //The platform corresponds to where the game is being played.
-    //2 is xBox and 4 is PC
+    //1 is xBox, 2 is PS4, and 4 is PC
     let platform = '2';
     //let platform = '4';
     //Gamer tags are plane for xBox, PC names need '%23' to represent the pound sign and then the Battle.net identifier appended to the name
