@@ -10,7 +10,11 @@
 use serde_json::Value; 
 ///The std Read module is needed to pull the API key from an external file.
 use std::io::Read;
-
+use std::error::Error;
+use std::fs::File;
+use std::io::prelude::*;
+use std::path::Path;
+use std::io::BufRead;
 
 pub fn print_equipped(items: Vec<String>) {
     for item in items {
@@ -232,4 +236,27 @@ pub fn fix_json(mut buf: String) -> String {
         index = buf[indexno + 1..].find(']');
     }
     buf
+}
+
+fn save_to_file(character_info:String) -> Result<()> {
+    let mut buffer = String::new();//storage for raw responce from user
+    io::stdin().read_to_string(&mut buffer)?;
+    let mut handle = stdin.lock();
+
+    println!("What is the filename you want to save the charater info to?");
+    let file_info = handle.read_to_string(&mut buffer).unwrap();//unwraped input from user
+    let path = Path::new(file_info);
+    let display = path.display();
+
+    // Open a file in write-only mode, returns `io::Result<File>`
+    let mut file = match File::create(&path) {
+        Err(why) => panic!("couldn't create {}: {}", display, why.description()),
+        Ok(file) => file,
+    };
+
+    // Write the character information to file
+    match file.write_all(character_info.as_bytes()) {
+        Err(why) => panic!("couldn't write to {}: {}", display, why.description()),
+        Ok(_) => println!("successfully wrote to {}", display),
+    }
 }
