@@ -30,9 +30,7 @@ fn main() {
     }
 	
     //get_member_id(api_key::String, platform::char, player_name::String) -> String
-    let mut membership_id = inventory::get_member_id(&api_key, platform, player_name.clone());
-    //strip_quotes(membership_id) -> String
-    membership_id = inventory::strip_quotes(membership_id);//removes quotes
+    let membership_id = inventory::get_member_id(&api_key, platform, player_name.clone());
     //all_equipment(api_key::String, membership_id::String, platform::char) -> Vec <String>
     let items = inventory::all_equipment(&api_key, membership_id, platform);
     println!("\n\n{} is equipped with the following items:\n", player_name);

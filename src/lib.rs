@@ -10,9 +10,80 @@
 use serde_json::Value; 
 ///The std Read module is needed to pull the API key from an external file.
 use std::io::Read;
+use serde::{Deserialize, Serialize};
+
+use std::collections::HashMap;
 
 
-pub fn print_equipped(items: Vec<String>) {
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all="camelCase")]
+struct User { 
+            icon_path: Option<String>,
+            membership_type: usize,
+            membership_id: String,
+            display_name: String,
+}
+
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+struct UserResponse {
+    response: Vec<User>,
+    error_code: i64,
+    error_status: String,
+    message_data: HashMap<(), ()>,
+    throttle_seconds: u64,
+    message: String,
+}
+
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all="camelCase")]
+struct Item {
+   transfer_status : u64,
+   dismantle_permission : u64,
+   bucket_hash : u64,
+   quantity : u64,
+   item_hash : u64,
+   state : u64,
+   bind_status : u64,
+   lockable : bool,
+   is_wrapper : bool,
+   item_instance_id : String,
+   location : i64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct EquipmentData {
+    items: Vec<Item>
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Equipment {
+    privacy: u64,
+    data: HashMap<String, EquipmentData>,
+}
+
+#[derive(Serialize, Deserialize)]
+struct CharacterEquipment {
+    #[serde(rename = "characterEquipment")]
+    character_equipment: Equipment,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "PascalCase")]
+struct APIResponse {
+    error_code: i64,
+    response: CharacterEquipment,
+    error_status: String,
+    message_data: HashMap<(), ()>,
+    throttle_seconds: u64,
+    message: String,
+}
+
+
+
+pub fn print_equipped(items: Vec<u64>) {
     for item in items {
         // call get_item function
         let item_detail = get_item(item);
@@ -44,21 +115,18 @@ pub fn print_equipped(items: Vec<String>) {
 }
 
 
-pub fn all_equipment(api_key: &str, membership_id: String, platform: char) -> Vec<String> {
+pub fn all_equipment(api_key: &str, membership_id: String, platform: char) -> Vec<u64> {
     let mut results = Vec::new();
     // call get_gear to connect with Destiny API
     let equipment = get_gear(api_key, platform, membership_id);
-    // call unwrap_response to remove outer portions of code we don't need (see function for details)
-    let hold_items = unwrap_response(equipment, 5);
-    if hold_items.is_empty() {
-        println!("unwrap response failed somehow");
-    } else {
-        //create the vector of item hash strings that will be given to print_equipment later
-        for item in hold_items {
-            let item_json: Value = serde_json::from_str(&item).unwrap();
-            let item_hash = item_json["itemHash"].to_string();
-            results.push(item_hash);
-        }
+    let response: APIResponse =
+        serde_json::from_str(&equipment).expect("failed in serde");
+    let data_set = response.response.character_equipment.data;
+    for (_string, map) in data_set {
+      //let hashmap_items = data_set.map;
+      for item in map.items {
+        results.push(item.item_hash);
+      }
     }
     results
 }
@@ -118,9 +186,9 @@ pub fn get_member_id(api_key: &str, platform: char, player_name: String) -> Stri
         String::from("Player not found")
     //Player was found and membershipId is returned as part of a json object
     } else {
-        buf = fix_json(buf);
-        let info: Value = serde_json::from_str(&buf).expect("Failed to parse response!");
-        info["Response"]["membershipId"].to_string()
+        let user_response : UserResponse = serde_json::from_str(&buf).expect("Failed to parse response!");
+        let user = user_response.response.first().unwrap();
+        user.membership_id.clone()
     }
 }
 
@@ -149,54 +217,14 @@ pub fn get_gear(api_key: &str, platform: char, membership_id: String) -> String 
     buf
 }
 
-pub fn unwrap_response(source: String, depth: usize) -> Vec<String> {
-    // this one was... fun. due to the varying formats of the jsons returned from
-    // our API calls, this function uses a depth integer to indicate
-    // how many opening curly brackets we want to ignore when pulling our
-    // data out of the source
-    let mut results = Vec::new();
-    let mut starts = Vec::new();
-    let mut ends = Vec::new();
-    let mut open = 0;
-    let mut close = 0;
-    let chars = source.as_str().char_indices();
-    for guy in chars {
-        if guy.1 == '{' {
-            open += 1;
-            // once we reach the correct number of brackets to ignore,
-            // we then want to start grabbing the indices where we find open brackets
-            if open == close + depth + 1 {
-                starts.push(guy.0);
-            }
-        } else if guy.1 == '}' {
-            close += 1;
-            // if we have found the end of one of the pieces we want,
-            // get its closing index and reduce the open and close counts
-            if open == close + depth {
-                ends.push(guy.0);
-                open -= 1;
-                close -= 1;
-            }
-        }
-    }
-    // we should now have vector "starts" with some number of opening indices
-    // and vector "ends" with the corresponding closing indices
-    // not we populate "results" with the corresponing substrings
-    let sections = starts.len();
-    for index in 0..sections {
-        results.push(source[starts[index]..=ends[index]].to_string());
-    }
-    results
-}
-
-pub fn get_item(item_id: String) -> String {
+pub fn get_item(item_id: u64) -> String {
     //get_item takes the item identifier metadata and gets the information from Bungie
     let api_key = get_api_key();
     //url is built
     let mut url = String::from(
         "https://www.bungie.net/Platform/Destiny2/Manifest/DestinyInventoryItemDefinition/",
     );
-    url.push_str(&item_id);
+    url.push_str(&item_id.to_string());
     //built url is sent to Bungie
     let mut response = reqwest::Client::new()
         .get(&url)
@@ -212,24 +240,3 @@ pub fn get_item(item_id: String) -> String {
     buf
 }
 
-pub fn fix_json(mut buf: String) -> String {
-    // this function exists because I could not get serde_json to play nicely with
-    // jsons that had structs as the values of key-value pairs. By removing the
-    // square brackets around these structs, I was able to get everything running
-
-    // first remove opening brackets
-    let mut index = buf.find('[');
-    while index != None {
-        let indexno = index.unwrap() as usize;
-        buf.remove(indexno);
-        index = buf[indexno + 1..].find('[');
-    }
-    // then remove closing brackets!
-    index = buf.find(']');
-    while index != None {
-        let indexno = index.unwrap() as usize;
-        buf.remove(indexno);
-        index = buf[indexno + 1..].find(']');
-    }
-    buf
-}
