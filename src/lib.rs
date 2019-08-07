@@ -11,9 +11,7 @@ use serde_json::Value;
 ///The std Read module is needed to pull the API key from an external file.
 use std::io::Read;
 use serde::{Deserialize, Serialize};
-
 use std::collections::HashMap;
-
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all="camelCase")]
